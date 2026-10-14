@@ -3,355 +3,342 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ambur Dum Biryani</title>
-  <!-- Tailwind CSS -->
+  <title>Ambur Dum Biryani - Online Ordering</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Poppins', sans-serif; }
+  </style>
 </head>
-<body class="bg-gray-900 text-white font-sans pb-16">
+<body class="bg-gray-50 text-gray-800 pb-20">
 
-  <!-- Header -->
-  <header class="bg-red-700 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-    <div>
-      <h1 class="text-base font-bold">🍗 Ambur Dum Biryani</h1>
-      <p id="viewTitle" class="text-[10px] text-red-200">Customer Menu & Ordering</p>
-    </div>
-    <div class="flex gap-2">
-      <button onclick="switchView('customer')" id="btnCustomer" class="text-xs bg-white text-red-700 px-3 py-1.5 rounded-lg font-bold shadow">Menu</button>
-      <button onclick="checkAdminPassword()" id="btnAdmin" class="text-xs bg-red-800 text-red-200 px-3 py-1.5 rounded-lg font-bold">Admin</button>
+  <!-- Header / Navbar -->
+  <header class="bg-red-700 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold tracking-wide">Ambur Dum Biryani</h1>
+        <p class="text-xs text-red-200"><i class="fa-solid fa-location-dot"></i> Kengeri, Bengaluru</p>
+      </div>
+      <button id="adminLoginBtn" onclick="toggleAdminModal()" class="text-xs bg-red-800 hover:bg-red-900 text-white px-3 py-1.5 rounded-lg border border-red-600 transition">
+        <i class="fa-solid fa-user-shield mr-1"></i> Admin
+      </button>
     </div>
   </header>
 
-  <!-- CUSTOMER LOGIN MODAL -->
-  <div id="customerLoginModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-4">
-      <h3 class="font-bold text-gray-800 text-md text-center">📱 Customer Login</h3>
-      
-      <div id="loginStep1" class="space-y-3">
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Mobile Number</label>
-          <input type="tel" id="loginPhone" placeholder="Enter 10-digit number" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none" maxlength="10">
-        </div>
-        <button onclick="sendCustomerOTP()" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-red-700">Get OTP</button>
-      </div>
-
-      <div id="loginStep2" class="space-y-3 hidden">
-        <p class="text-xs text-gray-500 text-center">OTP bhej diya gaya hai. Demo OTP: <b class="text-red-600">1234</b></p>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">Enter 4-digit OTP</label>
-          <input type="text" id="loginOTP" placeholder="1234" class="w-full border rounded-xl p-2.5 text-sm text-center font-mono tracking-widest focus:outline-none" maxlength="4">
-        </div>
-        <button onclick="verifyCustomerOTP()" class="w-full bg-green-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-green-700">Verify & Login</button>
-      </div>
-    </div>
+  <!-- Hero Banner -->
+  <div class="bg-amber-500 text-white py-6 px-4 text-center shadow-inner">
+    <h2 class="text-2xl font-extrabold mb-1">Authentic Ambur Flavors</h2>
+    <p class="text-sm opacity-90">Hot & Fresh Biryani Delivered to Your Doorstep!</p>
   </div>
 
-  <!-- CUSTOMER VIEW -->
-  <div id="customerView" class="p-4 max-w-md mx-auto space-y-4">
-    <div class="flex justify-between items-center bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-700">
+  <!-- Main Content / Menu Area -->
+  <main class="max-w-4xl mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-bold text-gray-800 border-l-4 border-red-600 pl-2">Our Special Menu</h3>
+      <span class="text-xs text-gray-500">Fast Delivery</span>
+    </div>
+
+    <!-- Menu Grid -->
+    <div id="menuContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Menu items will be loaded dynamically via JavaScript -->
+    </div>
+  </main>
+
+  <!-- Floating Cart Bar (Bottom) -->
+  <div id="cartBar" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-2xl p-3 z-40 hidden">
+    <div class="max-w-4xl mx-auto flex justify-between items-center">
       <div>
-        <span class="text-[10px] text-gray-400 block uppercase font-bold">Logged In As</span>
-        <span id="loggedInPhoneDisplay" class="text-xs font-black text-white">--</span>
+        <p class="text-xs text-gray-500"><span id="cartCount">0</span> Items Selected</p>
+        <p class="text-lg font-bold text-red-600">₹<span id="cartTotal">0</span></p>
       </div>
-      <div class="flex gap-1.5">
-        <button onclick="openCustomerHistoryModal()" class="bg-red-900/60 text-red-200 text-xs px-2.5 py-1.5 rounded-xl font-bold">📜 History & Status</button>
-        <button onclick="customerLogout()" class="bg-gray-700 text-gray-300 text-xs px-2 py-1.5 rounded-xl font-bold">Logout</button>
-      </div>
-    </div>
-
-    <!-- Active Live Order Notification Banner for Customer -->
-    <div id="customerLiveNotificationBanner" class="hidden bg-red-950/80 border border-red-500 p-3 rounded-2xl shadow-md text-xs space-y-1">
-      <div class="flex justify-between items-center font-bold text-red-300">
-        <span>🔔 Live Order Update</span>
-        <span id="bannerOrderStatus" class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">Pending</span>
-      </div>
-      <p id="bannerOrderDesc" class="text-gray-300">Your order is being processed.</p>
-    </div>
-
-    <div class="bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-700">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="font-bold text-white text-sm">📋 Delicious Menu</h2>
-        <button onclick="hardResetMenu()" class="text-[10px] bg-red-600 text-white px-2.5 py-1 rounded font-bold">🔄 Force Update</button>
-      </div>
-      <div id="customerMenu" class="grid grid-cols-2 gap-3">
-        <p class="text-xs text-gray-400 text-center py-4 col-span-2">Loading menu...</p>
-      </div>
+      <button onclick="openCheckoutModal()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-6 py-2.5 rounded-xl text-sm shadow-md transition">
+        View Order <i class="fa-solid fa-arrow-right ml-1"></i>
+      </button>
     </div>
   </div>
 
-  <!-- ORDER MODAL -->
-  <div id="orderModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-gray-800 text-md">🛒 Complete Your Order</h3>
-        <button onclick="toggleAddressEdit()" id="editAddressBtn" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold hidden">✏️ Change Address</button>
+  <!-- Checkout / Order Modal -->
+  <div id="checkoutModal" class="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 hidden">
+    <div class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto p-5">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-lg font-bold text-gray-800">Complete Your Order</h3>
+        <button onclick="closeCheckoutModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
       </div>
-      
-      <div id="modalItemPreview" class="flex items-center gap-3 bg-red-50 p-2 rounded-xl border border-red-100">
-        <img id="modalItemImg" src="" class="w-12 h-12 object-cover rounded-lg border">
-        <div>
-          <h4 id="modalItemTitle" class="text-xs text-gray-800 font-bold"></h4>
-          <span id="modalItemPrice" class="text-xs text-red-600 font-extrabold"></span>
-        </div>
+
+      <!-- Selected Items Summary -->
+      <div id="checkoutItems" class="space-y-2 mb-4 max-h-40 overflow-y-auto divide-y divide-gray-100 text-sm">
+        <!-- Cart Items -->
       </div>
-      
-      <div class="space-y-2 pt-1 text-xs">
+
+      <div class="border-t pt-2 mb-4 flex justify-between font-bold text-base">
+        <span>Total Amount:</span>
+        <span class="text-red-600">₹<span id="modalTotal">0</span></span>
+      </div>
+
+      <!-- Customer Details Form -->
+      <form id="orderForm" onsubmit="handleOrderSubmit(event)" class="space-y-3">
         <div>
-          <label class="block font-bold text-gray-600">Full Name</label>
-          <input type="text" id="custName" placeholder="e.g. Rahul Kumar" class="w-full border rounded-xl p-2 focus:outline-none" required>
-        </div>
-        <div>
-          <label class="block font-bold text-gray-600">Mobile Number (Verified)</label>
-          <input type="tel" id="custPhone" class="w-full border rounded-xl p-2 bg-gray-100 font-bold text-gray-700 focus:outline-none" readonly>
-        </div>
-        <div>
-          <label class="block font-bold text-gray-600">Building Name</label>
-          <input type="text" id="custBuilding" placeholder="e.g. Provident Equinox" class="w-full border rounded-xl p-2 focus:outline-none" required>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block font-bold text-gray-600">Room / Flat No</label>
-            <input type="text" id="custRoomNo" placeholder="e.g. Flat 402" class="w-full border rounded-xl p-2 focus:outline-none" required>
-          </div>
-          <div>
-            <label class="block font-bold text-gray-600">Quantity</label>
-            <input type="number" id="custQty" value="1" min="1" oninput="updateUPILink()" class="w-full border rounded-xl p-2 focus:outline-none" required>
-          </div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Your Name</label>
+          <input type="text" id="custName" required placeholder="Enter full name" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
         <div>
-          <label class="block font-bold text-gray-600">Full Street Address & Landmark</label>
-          <textarea id="custAddress" placeholder="Street, Area, Landmark..." class="w-full border rounded-xl p-2 focus:outline-none h-14" required></textarea>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Phone Number</label>
+          <input type="tel" id="custPhone" required placeholder="10-digit mobile number" class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none">
         </div>
         <div>
-          <label class="block font-bold text-gray-600">Pincode</label>
-          <input type="number" id="custPincode" placeholder="e.g. 560060" class="w-full border rounded-xl p-2 focus:outline-none" required>
-        </div>
-        <div>
-          <label class="block font-bold text-gray-600 mb-1">Payment Method</label>
-          <select id="custPaymentType" onchange="toggleUPISection()" class="w-full border rounded-xl p-2 focus:outline-none font-bold text-gray-700 bg-white">
-            <option value="Cash on Delivery (COD)">💵 Cash on Delivery (COD)</option>
-            <option value="UPI Online Payment">📱 UPI Payment (PhonePe)</option>
-          </select>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Delivery Address</label>
+          <textarea id="custAddress" required rows="2" placeholder="House/Flat No, Landmark, Kengeri..." class="w-full text-sm border rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 outline-none"></textarea>
         </div>
 
-        <!-- PhonePe QR Code & Direct Scanner Link Box -->
-        <div id="upiSection" class="hidden bg-purple-50 p-3 rounded-xl border border-purple-200 text-center space-y-2">
-          <p class="font-bold text-purple-900 text-[11px]">Scan QR or Click to Open Scanner</p>
-          <div class="bg-white p-2 inline-block rounded-lg border shadow-sm">
-            <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7488391910-6@ybl%26pn=Mr%20MD%20ALAM" class="w-36 h-36 mx-auto object-contain" alt="PhonePe QR Code">
-          </div>
-          <p class="font-bold text-gray-800 text-xs">Mr MD ALAM</p>
-          <p class="font-mono text-[11px] font-bold text-blue-600 bg-white py-1 px-2 rounded border">UPI ID: 7488391910-6@ybl</p>
-          
-          <a id="upiPayBtn" href="#" class="block w-full bg-purple-600 text-white text-xs font-bold py-2 rounded-xl shadow hover:bg-purple-700 text-center">📱 Click Here to Pay via PhonePe / UPI</a>
-          
-          <div class="pt-2 text-left">
-            <label class="block font-bold text-purple-900 text-[11px] mb-1">Enter 12-Digit UTR / Transaction ID *</label>
-            <input type="text" id="custUtrNo" placeholder="e.g. 423512345678" maxlength="16" class="w-full border border-purple-300 rounded-xl p-2 font-mono text-xs focus:outline-none bg-white">
-          </div>
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2">
-        <button onclick="closeOrderModal()" class="w-1/2 bg-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl">Cancel</button>
-        <button onclick="submitCustomerOrder()" class="w-1/2 bg-red-600 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-red-700">Place Order</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- CUSTOMER HISTORY MODAL -->
-  <div id="customerHistoryModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="bg-white text-black w-full max-w-sm p-5 rounded-2xl shadow-xl space-y-3 max-h-[80vh] overflow-y-auto">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="font-bold text-gray-800 text-md">📜 Your Order History & Status</h3>
-        <button onclick="closeCustomerHistoryModal()" class="text-xs bg-gray-200 text-gray-700 font-bold px-2.5 py-1 rounded-lg">Close</button>
-      </div>
-      <div id="customerHistoryList" class="space-y-2 text-xs">
-        <p class="text-gray-400 text-center py-4">No order history found.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN LOGIN MODAL -->
-  <div id="adminLoginModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-4">
-      <h3 class="font-bold text-gray-800 text-md text-center">🔐 Admin Login</h3>
-      <input type="password" id="adminPassInput" placeholder="Enter Password" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none">
-      <div class="flex gap-2">
-        <button onclick="closeAdminLogin()" class="w-1/2 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded-xl">Cancel</button>
-        <button onclick="verifyAdminPassword()" class="w-1/2 bg-red-600 text-white text-xs font-bold py-2 rounded-xl">Login</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ADMIN VIEW -->
-  <div id="adminView" class="hidden p-4 max-w-md mx-auto space-y-4 text-black">
-    <div class="bg-red-50 p-3 rounded-2xl border border-red-200 flex justify-between items-center text-xs">
-      <div>
-        <span class="font-bold text-red-800 block">Owner Contact Number</span>
-        <span class="text-gray-700 font-mono">📱 +91 7488391910</span>
-      </div>
-      <button onclick="play10SecAdminAlarm()" class="bg-red-600 text-white text-[10px] px-2.5 py-1 rounded-lg font-bold">🔔 Test 10s Alarm</button>
-    </div>
-
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-white p-3.5 rounded-2xl shadow-sm border">
-        <p class="text-[10px] text-gray-500 font-bold uppercase">Total Orders</p>
-        <h3 id="totalOrders" class="text-xl font-black text-gray-800 mt-1">0</h3>
-      </div>
-      <div class="bg-white p-3.5 rounded-2xl shadow-sm border">
-        <p class="text-[10px] text-gray-500 font-bold uppercase">Total Revenue</p>
-        <h3 id="totalRevenue" class="text-xl font-black text-green-600 mt-1">₹0</h3>
-      </div>
-    </div>
-
-    <!-- Live Orders -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
-      <div class="flex justify-between items-center">
-        <h2 class="font-bold text-gray-800 text-sm">📦 Customer Orders</h2>
-        <span id="orderCountBadge" class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">0 Active</span>
-      </div>
-      <div id="ordersContainer" class="space-y-3">
-        <p class="text-xs text-gray-400 text-center py-3">No orders yet.</p>
-      </div>
-    </div>
-
-    <!-- Staff Management Section -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
-      <h2 class="font-bold text-gray-800 text-sm">👥 Restaurant Staff</h2>
-      <form id="addStaffForm" class="space-y-2.5">
-        <div class="grid grid-cols-2 gap-2">
-          <input type="text" id="staffName" placeholder="Staff Name" class="w-full border rounded-xl p-2 text-xs focus:outline-none" required>
-          <input type="tel" id="staffPhone" placeholder="Mobile Number" class="w-full border rounded-xl p-2 text-xs focus:outline-none" required>
-        </div>
-        <button type="submit" class="w-full bg-gray-800 text-white font-bold py-2 rounded-xl text-xs hover:bg-black">Add Staff Member</button>
-      </form>
-      <div id="staffListContainer" class="space-y-2 pt-2 border-t">
-        <p class="text-xs text-gray-400 text-center">No staff added yet.</p>
-      </div>
-    </div>
-
-    <!-- Add Item Form -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
-      <h2 class="font-bold text-gray-800 text-sm">➕ Add Menu Item</h2>
-      <form id="addMenuForm" class="space-y-2.5">
-        <input type="text" id="itemName" placeholder="Item Name (e.g. Kabab)" class="w-full border rounded-xl p-2.5 text-sm" required>
-        <div class="grid grid-cols-2 gap-2">
-          <select id="itemCategory" class="w-full border rounded-xl p-2.5 text-sm">
-            <option value="Biryani">Biryani</option>
-            <option value="Starters">Starters</option>
-            <option value="Drinks">Drinks</option>
-          </select>
-          <input type="number" id="itemPrice" placeholder="Price (₹)" class="w-full border rounded-xl p-2.5 text-sm" required>
-        </div>
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Item Photo (Optional)</label>
-          <input type="file" id="itemImageInput" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-        </div>
-        <button type="submit" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm">Add Item With Photo</button>
+        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-lg mt-2 text-sm flex items-center justify-center gap-2">
+          <i class="fa-brands fa-whatsapp text-lg"></i> Send Order via WhatsApp
+        </button>
       </form>
     </div>
+  </div>
 
-    <!-- Manage Menu -->
-    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
-      <h2 class="font-bold text-gray-800 text-sm">📋 Current Menu List & Stock Management</h2>
-      <div id="adminMenuContainer" class="space-y-2">
-        <p class="text-xs text-gray-400 text-center py-2">Loading...</p>
+  <!-- Admin Panel Modal -->
+  <div id="adminModal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white w-full max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto p-5">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h3 class="text-lg font-bold text-gray-800"><i class="fa-solid fa-gear mr-1"></i> Admin Menu Management</h3>
+        <button onclick="toggleAdminModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <div id="adminLoginForm">
+        <p class="text-xs text-gray-500 mb-3">Enter Passcode to manage menu (Default: 1234)</p>
+        <div class="flex gap-2 mb-4">
+          <input type="password" id="adminPass" placeholder="Enter Password" class="border rounded-lg px-3 py-2 text-sm flex-1 outline-none">
+          <button onclick="checkAdminPass()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold">Login</button>
+        </div>
+      </div>
+
+      <div id="adminControlArea" class="hidden">
+        <p class="text-xs text-green-600 font-semibold mb-3"><i class="fa-solid fa-circle-check"></i> Admin Access Granted</p>
+        
+        <!-- Add New Item -->
+        <div class="bg-gray-50 p-3 rounded-xl border mb-4 space-y-2">
+          <h4 class="text-xs font-bold text-gray-700 uppercase">Add New Menu Item</h4>
+          <input type="text" id="newItemName" placeholder="Item Name (e.g. Chicken Biryani)" class="w-full text-sm border p-2 rounded-lg">
+          <div class="flex gap-2">
+            <input type="number" id="newItemPrice" placeholder="Price (₹)" class="w-1/2 text-sm border p-2 rounded-lg">
+            <select id="newItemCat" class="w-1/2 text-sm border p-2 rounded-lg">
+              <option value="Biryani">Biryani</option>
+              <option value="Starters">Starters</option>
+              <option value="Beverages">Beverages</option>
+            </select>
+          </div>
+          <button onclick="addNewMenuItem()" class="w-full bg-red-600 text-white text-sm py-2 rounded-lg font-semibold mt-1">+ Add Item</button>
+        </div>
+
+        <button onclick="resetDefaultMenu()" class="text-xs text-red-600 underline font-medium">Reset to Default Menu</button>
       </div>
     </div>
   </div>
 
+  <!-- JavaScript Logic -->
   <script>
-    const ADMIN_PASS = "Dum2580";
-    const OWNER_PHONE = "917488391910";
-    
-    // Updated Shop Coordinates (Provident main road, Bluejay Ardley, Kengeri Hobli, Doddabele, Bengaluru, Karnataka 560060)
-    const SHOP_LAT = 12.887055; 
-    const SHOP_LNG = 77.468685;
-    const SHOP_NAME = "Ambur Dum Biryani, Provident main road, Bluejay Ardley, Kengeri Hobli, Doddabele, Bengaluru 560060";
+    // Initial Menu Data
+    const defaultMenu = [
+      { id: 1, name: 'Ambur Chicken Biryani', category: 'Biryani', price: 180, desc: 'Authentic Ambur style flavorful chicken biryani served with raita.' },
+      { id: 2, name: 'Ambur Mutton Biryani', category: 'Biryani', price: 260, desc: 'Tender mutton cooked with seeraga samba rice and signature spices.' },
+      { id: 3, name: 'Ambur Chicken Biryani (Half)', category: 'Biryani', price: 110, desc: 'Half portion of rich Ambur chicken biryani.' },
+      { id: 4, name: 'Ambur Biryani Half', category: 'Biryani', price: 100, desc: 'Delicious regular half biryani.' },
+      { id: 5, name: 'Hyderabad Kushka', category: 'Biryani', price: 90, desc: 'Aromatic plain biryani rice cooked in rich spices.' },
+      { id: 6, name: 'Hyderabad Kushka Half', category: 'Biryani', price: 50, desc: 'Half portion of Hyderabad plain biryani rice.' },
+      { id: 7, name: 'Ambur Kushka', category: 'Biryani', price: 90, desc: 'Ambur style seeraga samba plain biryani rice.' },
+      { id: 8, name: 'Ambur Kushka Half', category: 'Biryani', price: 50, desc: 'Half portion of Ambur plain biryani rice.' },
+      { id: 9, name: 'Egg Biryani', category: 'Biryani', price: 120, desc: 'Flavorful biryani rice served with two boiled eggs.' },
+      { id: 10, name: 'Kabab Full', category: 'Starters', price: 160, desc: 'Crispy and juicy fried chicken kabab.' },
+      { id: 11, name: 'Kabab Half', category: 'Starters', price: 80, desc: 'Half portion of crispy chicken kabab.' },
+      { id: 12, name: 'Egg Masala', category: 'Starters', price: 70, desc: 'Spicy egg gravy cooked with south Indian spices.' },
+      { id: 13, name: 'Kabab', category: 'Starters', price: 100, desc: 'Regular juicy chicken kabab starter.' }
+    ];
 
-    const DEFAULT_FOOD_IMG = "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=150&auto=format&fit=crop&q=60";
-    let selectedItemForOrder = null;
-    let tempPhoneNumber = "";
+    let cart = {};
 
-    function play10SecAdminAlarm() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        let startTime = Date.now();
-        let interval = setInterval(() => {
-          if (Date.now() - startTime >= 10000) {
-            clearInterval(interval);
-            return;
-          }
-          try {
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.type = "sawtooth";
-            osc.frequency.value = 950;
-            gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.35);
-          } catch(err) {}
-        }, 450);
-      } catch (e) {
-        console.log("Audio play error:", e);
-      }
+    function getMenu() {
+      const saved = localStorage.getItem('ambur_menu');
+      return saved ? JSON.parse(saved) : defaultMenu;
     }
 
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371; // Radius of the earth in km
-      const dLat = (lat2 - lat1) * (Math.PI / 180);
-      const dLon = (lon2 - lon1) * (Math.PI / 180);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      const d = R * c; // Distance in km
-      return d.toFixed(1);
+    function renderMenu() {
+      const menu = getMenu();
+      const container = document.getElementById('menuContainer');
+      container.innerHTML = '';
+
+      menu.forEach(item => {
+        const qty = cart[item.id] || 0;
+        const card = document.createElement('div');
+        card.className = 'bg-white rounded-xl shadow-sm border border-gray-100 p-4 flex justify-between items-center';
+        card.innerHTML = `
+          <div class="flex-1 pr-3">
+            <span class="inline-block px-2 py-0.5 text-[10px] font-semibold text-amber-800 bg-amber-100 rounded-md mb-1">${item.category}</span>
+            <h4 class="font-bold text-gray-800 text-sm">${item.name}</h4>
+            <p class="text-xs text-gray-500 mt-0.5">${item.desc || ''}</p>
+            <p class="text-red-600 font-bold text-sm mt-2">₹${item.price}</p>
+          </div>
+          <div>
+            ${qty === 0 ? `
+              <button onclick="updateCart(${item.id}, 1)" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 font-bold px-4 py-1.5 rounded-lg text-xs transition">
+                ADD +
+              </button>
+            ` : `
+              <div class="flex items-center bg-red-600 text-white rounded-lg overflow-hidden text-xs">
+                <button onclick="updateCart(${item.id}, -1)" class="px-2.5 py-1 hover:bg-red-700 font-bold">-</button>
+                <span class="px-2 font-bold">${qty}</span>
+                <button onclick="updateCart(${item.id}, 1)" class="px-2.5 py-1 hover:bg-red-700 font-bold">+</button>
+              </div>
+            `}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      updateCartBar();
     }
 
-    function hardResetMenu() {
-      const freshMenu = [
-        { id: '1', name: 'Hyderabad biriyani', category: 'Biryani', price: 200, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '2', name: 'Hyderabad biriyani half', category: 'Biryani', price: 110, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '3', name: 'Ambur biriyani', category: 'Biryani', price: 180, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '4', name: 'Ambur biriyani half', category: 'Biryani', price: 100, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '5', name: 'Hyderabad kushka', category: 'Biryani', price: 140, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '6', name: 'Hyderabad kushka half', category: 'Biryani', price: 80, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '7', name: 'Ambur kushka', category: 'Biryani', price: 130, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '8', name: 'Ambur kushka half', category: 'Biryani', price: 75, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '9', name: 'Egg biriyani', category: 'Biryani', price: 150, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '10', name: 'Kabab full', category: 'Starters', price: 160, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '11', name: 'Kabab half', category: 'Starters', price: 90, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '12', name: 'Egg masala', category: 'Starters', price: 120, image: DEFAULT_FOOD_IMG, outOfStock: false },
-        { id: '13', name: 'Kabab', category: 'Starters', price: 1, image: DEFAULT_FOOD_IMG, outOfStock: false }
-      ];
-      localStorage.setItem('ambur_menu', JSON.stringify(freshMenu));
-      loadCustomerMenu();
-      alert('Menu successfully updated!');
+    function updateCart(id, change) {
+      if (!cart[id]) cart[id] = 0;
+      cart[id] += change;
+      if (cart[id] <= 0) delete cart[id];
+      renderMenu();
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const loggedUser = localStorage.getItem('ambur_logged_user');
-      if (loggedUser) {
-        document.getElementById('customerLoginModal').classList.add('hidden');
-        document.getElementById('loggedInPhoneDisplay').innerText = "+91 " + loggedUser;
-        checkCustomerLiveStatus(loggedUser);
+    function updateCartBar() {
+      const menu = getMenu();
+      let totalCount = 0;
+      let totalPrice = 0;
+
+      Object.keys(cart).forEach(id => {
+        const item = menu.find(m => m.id == id);
+        if (item) {
+          totalCount += cart[id];
+          totalPrice += item.price * cart[id];
+        }
+      });
+
+      const cartBar = document.getElementById('cartBar');
+      if (totalCount > 0) {
+        cartBar.classList.remove('hidden');
+        document.getElementById('cartCount').innerText = totalCount;
+        document.getElementById('cartTotal').innerText = totalPrice;
       } else {
-        document.getElementById('customerLoginModal').classList.remove('hidden');
+        cartBar.classList.add('hidden');
       }
+    }
+
+    function openCheckoutModal() {
+      const menu = getMenu();
+      const container = document.getElementById('checkoutItems');
+      container.innerHTML = '';
+      let total = 0;
+
+      Object.keys(cart).forEach(id => {
+        const item = menu.find(m => m.id == id);
+        if (item) {
+          const itemTotal = item.price * cart[id];
+          total += itemTotal;
+          container.innerHTML += `
+            <div class="flex justify-between items-center py-1.5">
+              <div>
+                <p class="font-medium text-gray-800">${item.name}</p>
+                <p class="text-xs text-gray-500">₹${item.price} x ${cart[id]}</p>
+              </div>
+              <span class="font-semibold text-gray-700">₹${itemTotal}</span>
+            </div>
+          `;
+        }
+      });
+
+      document.getElementById('modalTotal').innerText = total;
+      document.getElementById('checkoutModal').classList.remove('hidden');
+    }
+
+    function closeCheckoutModal() {
+      document.getElementById('checkoutModal').classList.add('hidden');
+    }
+
+    function handleOrderSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('custName').value;
+      const phone = document.getElementById('custPhone').value;
+      const address = document.getElementById('custAddress').value;
+
+      const menu = getMenu();
+      let orderText = `*NEW ORDER - Ambur Dum Biryani*\n------------------------------\n`;
+      let total = 0;
+
+      Object.keys(cart).forEach(id => {
+        const item = menu.find(m => m.id == id);
+        if (item) {
+          const itemTotal = item.price * cart[id];
+          total += itemTotal;
+          orderText += `• ${item.name} x ${cart[id]} = ₹${itemTotal}\n`;
+        }
+      });
+
+      orderText += `------------------------------\n`;
+      orderText += `*Total Amount:* ₹${total}\n\n`;
+      orderText += `*Customer Details:*\n`;
+      orderText += `Name: ${name}\n`;
+      orderText += `Phone: ${phone}\n`;
+      orderText += `Address: ${address}\n`;
+
+      const whatsappNumber = '919000000000'; // Yahan apna WhatsApp number daalein
+      const encodedMsg = encodeURIComponent(orderText);
+      window.open(`https://wa.me/${whatsappNumber}?text=${encodedMsg}`, '_blank');
+    }
+
+    // Admin Controls
+    function toggleAdminModal() {
+      const modal = document.getElementById('adminModal');
+      modal.classList.toggle('hidden');
+    }
+
+    function checkAdminPass() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === '1234') {
+        document.getElementById('adminLoginForm').classList.add('hidden');
+        document.getElementById('adminControlArea').classList.remove('hidden');
+      } else {
+        alert('Incorrect Password! (Default is 1234)');
+      }
+    }
+
+    function addNewMenuItem() {
+      const name = document.getElementById('newItemName').value;
+      const price = parseFloat(document.getElementById('newItemPrice').value);
+      const cat = document.getElementById('newItemCat').value;
+
+      if (!name || !price) {
+        alert('Please fill all fields');
+        return;
+      }
+
+      const menu = getMenu();
+      menu.push({ id: Date.now(), name, category: cat, price, desc: 'Freshly prepared item' });
+      localStorage.setItem('ambur_menu', JSON.stringify(menu));
       
-      let currentMenu = JSON.parse(localStorage.getItem('ambur_menu')) || [];
-      const kababExists = currentMenu.some(item => item.name.toLowerCase() === 'kabab' && item.price == 1);
-      if (!kababExists || currentMenu.length < 13) {
-        hardResetMenu();
-      } else {
-        loadCustomerMenu();
-      }
-    });
+      document.getElementById('newItemName').value = '';
+      document.getElementById('newItemPrice').value = '';
+      
+      renderMenu();
+      alert('New item added!');
+    }
 
-    function checkCustomerLiveStatus(phone) {
-      const orders = JSON.parse(localStorage.getItem('ambur_orders')) || [];
-      const userOrders = orders.filter(o => o.custo
+    function resetDefaultMenu() {
+      if (confirm('Reset menu to original defaults?')) {
+        localStorage.removeItem('ambur_menu');
+        renderMenu();
+      }
+    }
+
+    // Load menu on page load
+    window.addEventListener('DOMContentLoaded', renderMenu);
+  </script>
+</body>
+</html>
