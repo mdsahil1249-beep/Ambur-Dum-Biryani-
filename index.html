@@ -1,1 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambur Dum Biryani</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-900 text-white font-sans pb-24">
 
+  <!-- Header -->
+  <header class="bg-red-700 text-white p-4 shadow-md sticky top-0 z-40 flex justify-between items-center">
+    <div>
+      <h1 class="text-base font-bold">🍗 Ambur Dum Biryani</h1>
+      <p id="viewTitle" class="text-[10px] text-red-200">Customer Menu & Ordering</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="switchView('customer')" id="btnCustomer" class="text-xs bg-white text-red-700 px-3 py-1.5 rounded-lg font-bold shadow">Menu</button>
+      <button onclick="checkAdminPassword()" id="btnAdmin" class="text-xs bg-red-800 text-red-200 px-3 py-1.5 rounded-lg font-bold">Admin</button>
+    </div>
+  </header>
+
+  <!-- NEW ORDER ALARM BAR (admin) -->
+  <div id="alarmBar" class="hidden fixed bottom-0 left-0 right-0 z-[60] bg-red-600 text-white p-3 flex justify-between items-center shadow-2xl animate-pulse">
+    <span class="font-bold text-sm">🔔 Naya Order Aaya Hai!</span>
+    <button onclick="stopAlarm()" class="bg-white text-red-700 font-bold text-xs px-4 py-2 rounded-lg">Alarm Band Karo</button>
+  </div>
+
+  <!-- CUSTOMER LOGIN MODAL -->
+  <div id="customerLoginModal" class="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-4">
+      <h3 class="font-bold text-gray-800 text-md text-center">📱 Customer Login</h3>
+
+      <div id="loginStep1" class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Mobile Number</label>
+          <input type="tel" id="loginPhone" placeholder="Enter 10-digit number" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none" maxlength="10">
+        </div>
+        <button onclick="sendCustomerOTP()" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-red-700">Get OTP</button>
+      </div>
+
+      <div id="loginStep2" class="space-y-3 hidden">
+        <p class="text-xs text-gray-500 text-center">OTP bhej diya gaya hai. Demo OTP: <b class="text-red-600">1234</b></p>
+        <div>
+          <label class="block text-xs font-bold text-gray-600 mb-1">Enter 4-digit OTP</label>
+          <input type="text" id="loginOTP" placeholder="1234" class="w-full border rounded-xl p-2.5 text-sm text-center font-mono tracking-widest focus:outline-none" maxlength="4">
+        </div>
+        <button onclick="verifyCustomerOTP()" class="w-full bg-green-600 text-white font-bold py-2.5 rounded-xl text-sm hover:bg-green-700">Verify & Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER VIEW -->
+  <div id="customerView" class="p-4 max-w-md mx-auto space-y-4">
+    <div class="flex justify-between items-center bg-gray-800 p-3 rounded-2xl shadow-sm border border-gray-700">
+      <div>
+        <span class="text-[10px] text-gray-400 block uppercase font-bold">Logged In As</span>
+        <span id="loggedInPhoneDisplay" class="text-xs font-black text-white">--</span>
+      </div>
+      <div class="flex gap-1.5">
+        <button onclick="openCustomerHistoryModal()" class="bg-red-900/60 text-red-200 text-xs px-2.5 py-1.5 rounded-xl font-bold">📜 History & Status</button>
+        <button onclick="customerLogout()" class="bg-gray-700 text-gray-300 text-xs px-2 py-1.5 rounded-xl font-bold">Logout</button>
+      </div>
+    </div>
+
+    <!-- Live Order Notification Banner -->
+    <div id="customerLiveNotificationBanner" class="hidden bg-red-950/80 border border-red-500 p-3 rounded-2xl shadow-md text-xs space-y-1">
+      <div class="flex justify-between items-center font-bold text-red-300">
+        <span>🔔 Live Order Update</span>
+        <span id="bannerOrderStatus" class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">Pending</span>
+      </div>
+      <p id="bannerOrderDesc" class="text-gray-300">Your order is being processed.</p>
+    </div>
+
+    <div class="bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-700">
+      <div class="flex justify-between items-center mb-3">
+        <h2 class="font-bold text-white text-sm">📋 Delicious Menu</h2>
+      </div>
+      <div id="customerMenu" class="grid grid-cols-2 gap-3">
+        <p class="text-xs text-gray-400 text-center py-4 col-span-2">Loading menu...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDER MODAL -->
+  <div id="orderModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-3 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-gray-800 text-md">🛒 Complete Your Order</h3>
+        <button onclick="toggleAddressEdit()" id="editAddressBtn" class="text-[10px] bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold hidden">✏️ Change Address</button>
+      </div>
+
+      <div id="modalItemPreview" class="flex items-center gap-3 bg-red-50 p-2 rounded-xl border border-red-100">
+        <img id="modalItemImg" src="" class="w-12 h-12 object-cover rounded-lg border">
+        <div>
+          <h4 id="modalItemTitle" class="text-xs text-gray-800 font-bold"></h4>
+          <span id="modalItemPrice" class="text-xs text-red-600 font-extrabold"></span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-1 text-xs">
+        <div>
+          <label class="block font-bold text-gray-600">Full Name</label>
+          <input type="text" id="custName" placeholder="e.g. Rahul Kumar" class="w-full border rounded-xl p-2 focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-600">Mobile Number (Verified)</label>
+          <input type="tel" id="custPhone" class="w-full border rounded-xl p-2 bg-gray-100 font-bold text-gray-700 focus:outline-none" readonly>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-600">Building Name</label>
+          <input type="text" id="custBuilding" placeholder="e.g. Provident Equinox" class="w-full border rounded-xl p-2 focus:outline-none" required>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-bold text-gray-600">Room / Flat No</label>
+            <input type="text" id="custRoomNo" placeholder="e.g. Flat 402" class="w-full border rounded-xl p-2 focus:outline-none" required>
+          </div>
+          <div>
+            <label class="block font-bold text-gray-600">Quantity</label>
+            <input type="number" id="custQty" value="1" min="1" oninput="updateUPILink()" class="w-full border rounded-xl p-2 focus:outline-none" required>
+          </div>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-600">Full Street Address & Landmark</label>
+          <textarea id="custAddress" placeholder="Street, Area, Landmark..." class="w-full border rounded-xl p-2 focus:outline-none h-14" required></textarea>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-600">Pincode</label>
+          <input type="number" id="custPincode" placeholder="e.g. 560060" class="w-full border rounded-xl p-2 focus:outline-none" required>
+        </div>
+        <div>
+          <label class="block font-bold text-gray-600 mb-1">Payment Method</label>
+          <select id="custPaymentType" onchange="toggleUPISection()" class="w-full border rounded-xl p-2 focus:outline-none font-bold text-gray-700 bg-white">
+            <option value="Cash on Delivery (COD)">💵 Cash on Delivery (COD)</option>
+            <option value="UPI Online Payment">📱 UPI Payment (PhonePe)</option>
+          </select>
+        </div>
+
+        <div id="upiSection" class="hidden bg-purple-50 p-3 rounded-xl border border-purple-200 text-center space-y-2">
+          <p class="font-bold text-purple-900 text-[11px]">Scan QR or Click to Open Scanner</p>
+          <div class="bg-white p-2 inline-block rounded-lg border shadow-sm">
+            <img id="qrCodeImg" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=7488391910-6@ybl%26pn=Mr%20MD%20ALAM" class="w-36 h-36 mx-auto object-contain" alt="PhonePe QR Code">
+          </div>
+          <p class="font-bold text-gray-800 text-xs">Mr MD ALAM</p>
+          <p class="font-mono text-[11px] font-bold text-blue-600 bg-white py-1 px-2 rounded border">UPI ID: 7488391910-6@ybl</p>
+
+          <a id="upiPayBtn" href="#" class="block w-full bg-purple-600 text-white text-xs font-bold py-2 rounded-xl shadow hover:bg-purple-700 text-center">📱 Click Here to Pay via PhonePe / UPI</a>
+
+          <div class="pt-2 text-left">
+            <label class="block font-bold text-purple-900 text-[11px] mb-1">Enter 12-Digit UTR / Transaction ID *</label>
+            <input type="text" id="custUtrNo" placeholder="e.g. 423512345678" maxlength="16" class="w-full border border-purple-300 rounded-xl p-2 font-mono text-xs focus:outline-none bg-white">
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button onclick="closeOrderModal()" class="w-1/2 bg-gray-200 text-gray-700 text-xs font-bold py-2.5 rounded-xl">Cancel</button>
+        <button id="placeOrderBtn" onclick="submitCustomerOrder()" class="w-1/2 bg-red-600 text-white text-xs font-bold py-2.5 rounded-xl hover:bg-red-700">Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CUSTOMER HISTORY MODAL -->
+  <div id="customerHistoryModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white text-black w-full max-w-sm p-5 rounded-2xl shadow-xl space-y-3 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-gray-800 text-md">📜 Your Order History & Status</h3>
+        <button onclick="closeCustomerHistoryModal()" class="text-xs bg-gray-200 text-gray-700 font-bold px-2.5 py-1 rounded-lg">Close</button>
+      </div>
+      <div id="customerHistoryList" class="space-y-2 text-xs">
+        <p class="text-gray-400 text-center py-4">No order history found.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN LOGIN MODAL -->
+  <div id="adminLoginModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+    <div class="bg-white text-black w-full max-w-xs p-5 rounded-2xl shadow-xl space-y-4">
+      <h3 class="font-bold text-gray-800 text-md text-center">🔐 Admin Login</h3>
+      <input type="password" id="adminPassInput" placeholder="Enter Password" class="w-full border rounded-xl p-2.5 text-sm focus:outline-none">
+      <div class="flex gap-2">
+        <button onclick="closeAdminLogin()" class="w-1/2 bg-gray-200 text-gray-700 text-xs font-bold py-2 rounded-xl">Cancel</button>
+        <button onclick="verifyAdminPassword()" class="w-1/2 bg-red-600 text-white text-xs font-bold py-2 rounded-xl">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="adminView" class="hidden p-4 max-w-md mx-auto space-y-4 text-black">
+    <div class="bg-red-50 p-3 rounded-2xl border border-red-200 flex justify-between items-center text-xs">
+      <div>
+        <span class="font-bold text-red-800 block">Owner Contact Number</span>
+        <span class="text-gray-700 font-mono">📱 +91 7488391910</span>
+        <span class="text-[10px] text-green-700 font-bold block mt-1">🟢 Live: naye order par 10 sec alarm bajega (page khula rakhein)</span>
+      </div>
+      <button onclick="playAlarm10s()" class="bg-red-600 text-white text-[10px] px-2.5 py-1 rounded-lg font-bold">🔔 Test 10s Alarm</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border">
+        <p class="text-[10px] text-gray-500 font-bold uppercase">Total Orders</p>
+        <h3 id="totalOrders" class="text-xl font-black text-gray-800 mt-1">0</h3>
+      </div>
+      <div class="bg-white p-3.5 rounded-2xl shadow-sm border">
+        <p class="text-[10px] text-gray-500 font-bold uppercase">Total Revenue</p>
+        <h3 id="totalRevenue" class="text-xl font-black text-green-600 mt-1">₹0</h3>
+      </div>
+    </div>
+
+    <!-- Live Orders -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="font-bold text-gray-800 text-sm">📦 Customer Orders</h2>
+        <span id="orderCountBadge" class="text-[10px] bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-bold">0 Active</span>
+      </div>
+      <div id="ordersContainer" class="space-y-3">
+        <p class="text-xs text-gray-400 text-center py-3">No orders yet.</p>
+      </div>
+    </div>
+
+    <!-- Staff -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
+      <h2 class="font-bold text-gray-800 text-sm">👥 Restaurant Staff</h2>
+      <form id="addStaffForm" class="space-y-2.5">
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="staffName" placeholder="Staff Name" class="w-full border rounded-xl p-2 text-xs focus:outline-none" required>
+          <input type="tel" id="staffPhone" placeholder="Mobile Number" class="w-full border rounded-xl p-2 text-xs focus:outline-none" required>
+        </div>
+        <button type="submit" class="w-full bg-gray-800 text-white font-bold py-2 rounded-xl text-xs hover:bg-black">Add Staff Member</button>
+      </form>
+      <div id="staffListContainer" class="space-y-2 pt-2 border-t">
+        <p class="text-xs text-gray-400 text-center">No staff added yet.</p>
+      </div>
+    </div>
+
+    <!-- Add Item -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
+      <h2 class="font-bold text-gray-800 text-sm">➕ Add Menu Item</h2>
+      <form id="addMenuForm" class="space-y-2.5">
+        <input type="text" id="itemName" placeholder="Item Name (e.g. Kabab)" class="w-full border rounded-xl p-2.5 text-sm" required>
+        <div class="grid grid-cols-2 gap-2">
+          <select id="itemCategory" class="w-full border rounded-xl p-2.5 text-sm">
+            <option value="Biryani">Biryani</option>
+            <option value="Starters">Starters</option>
+            <option value="Drinks">Drinks</option>
+          </select>
+          <input type="number" id="itemPrice" placeholder="Price (₹)" class="w-full border rounded-xl p-2.5 text-sm" required>
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-gray-600 mb-1">Item Photo (Optional)</label>
+          <input type="file" id="itemImageInput" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+        </div>
+        <button type="submit" class="w-full bg-red-600 text-white font-bold py-2.5 rounded-xl text-sm">Add Item With Photo</button>
+      </form>
+    </div>
+
+    <!-- Manage Menu -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border space-y-3">
+      <h2 class="font-bold text-gray-800 text-sm">📋 Current Menu List & Stock Management</h2>
+      <div id="adminMenuContainer" class="space-y-2">
+        <p class="text-xs text-gray-400 text-center py-2">Loading...</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ================== CONFIG ==================
+    const ADMIN_PASS = "Dum2580";
+    const OWNER_PHONE = "917488391910";
+
+    const DEFAULT_FOOD_IMG = "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=150&auto=format&fit=crop&q=60";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCum45TZnB4xg70gaTiRUDkxLmwBHweCvg",
+      authDomain: "ambur-dum-biryani-56e09.firebaseapp.com",
+      projectId: "ambur-dum-biryani-56e09",
+      storageBucket: "ambur-dum-biryani-56e09.firebasestorage.app",
+      messagingSenderId: "605434924595",
+      appId: "1:605434924595:web:33724fc55b5c31c8c95d46",
+      measurementId: "G-RR4KJ8V3D3"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // ================== STATE ==================
+    let MENU = [];
+    let ALL_ORDERS = [];
+    let STAFF = [];
+    let MY_ORDERS = [];
+    let selectedItemForOrder = null;
+    let tempPhoneNumber = "";
+    let adminActive = false;
+    let adminListenersStarted = false;
+    let custOrdersUnsub = null;
+    let audioCtx = null;
+    let alarmTimer = null;
+    let adminFirstOrdersLoad = true;
+
+    function esc(s) {
+      return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // ================== ALARM ==================
+    function ensureAudio() {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+      } catch (e) { console.log('Audio error', e); }
+    }
+
+    function beepOnce() {
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.type = "sawtooth";
+        osc.frequency.value = 950;
+        gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.35);
+      } catch (e) {}
+    }
+
+    function playAlarm10s() {
+      ensureAudio();
+      stopAlarm();
+      document.getElementById('alarmBar').classList.remove('hidden');
+      const start = Date.now();
+      beepOnce();
+      alarmTimer = setInterval(() => {
+        if (Date.now() - start >= 10000) { stopAlarm(); return; }
+        beepOnce();
+      }, 450);
+      try { if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400, 200, 400]); } catch (e) {}
+    }
+
+    function stopAlarm() {
+      if (alarmTimer) { clearInterval(alarmTimer); alarmTimer = null; }
+      document.getElementById('alarmBar').classList.add('hidden');
+    }
+
+    // ================== LOGIN FLOW ==================
+    function sendCustomerOTP() {
+      const phone = document.getElementById('loginPhone').value.trim();
+      if (phone.length !== 10) {
+        alert("Kripya sahi 10-digit mobile number daalein.");
+        return;
+      }
+      tempPhoneNumber = phone;
+      document.getElementById('loginStep1').classList.add('hidden');
+      document.getElementById('loginStep2').classList.remove('hidden');
+    }
+
+    function verifyCustomerOTP() {
+      const otp = document.getElementById('loginOTP').value.trim();
+      if (otp !== "1234") {
+        alert("Galat OTP! Demo OTP '1234' enter karein.");
+        return;
+      }
+      localStorage.setItem('ambur_cust_phone', tempPhoneNumber);
+      document.getElementById('customerLoginModal').classList.add('hidden');
+      initCustomerSession(tempPhoneNumber);
+    }
+
+    function customerLogout() {
+      localStorage.removeItem('ambur_cust_phone');
+      if (custOrdersUnsub) { custOrdersUnsub(); custOrdersUnsub = null; }
+      document.getElementById('loginPhone').value = "";
+      document.getElementById('loginOTP').value = "";
+      document.getElementById('loginStep2').classList.add('hidden');
+      document.getElementById('loginStep1').classList.remove('hidden');
+      document.getElementById('customerLoginModal').classList.remove('hidden');
+    }
+
+    function initCustomerSession(phone) {
+      document.getElementById('loggedInPhoneDisplay').innerText = "+91 " + phone;
+      loadCustomerMenu();
+      listenCustomerOrders(phone);
+    }
+
+    // ================== MENU & ORDERS ==================
+    function loadCustomerMenu() {
+      db.collectio
